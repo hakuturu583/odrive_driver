@@ -26,12 +26,13 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(hardware_interface REQUIRED)
 
 add_library(odrive_cpp_sdk src/odrive_cpp_sdk.cpp)
 
 add_library(odrive_driver_component SHARED src/odrive_driver_component.cpp)
 target_link_libraries(odrive_driver_component odrive_cpp_sdk)
-ament_target_dependencies(odrive_driver_component rclcpp rclcpp_components)
+ament_target_dependencies(odrive_driver_component rclcpp rclcpp_components hardware_interface)
 
 ament_export_libraries(odrive_driver_component)
 

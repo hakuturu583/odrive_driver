@@ -37,6 +37,14 @@ namespace odrive_driver
             );
             sdk_ptr_ = std::make_shared<odrive::CppSdk>(odrive_cpp_sdk);
             sdk_ptr_->setZeroethRadianInEncoderTicks(zeroeth_radian_in_encoder_ticks);
+            angle_pubs_.push_back(create_publisher<std_msgs::msg::Float32>("angle/motor_0",1));
+            current_target_angles_ = std::vector<float>(1);
+            auto callback_0 =
+            [this](const typename std_msgs::msg::Float32::SharedPtr msg) -> void
+            {
+                current_target_angles_[0] = msg->data;
+            };
+            angle_subs_.push_back(create_subscription<std_msgs::msg::Float32>("target_angle/motor_0", 1, callback_0));
         }
         else if(num_motor_ == 2)
         {
@@ -75,6 +83,21 @@ namespace odrive_driver
             );
             sdk_ptr_ = std::make_shared<odrive::CppSdk>(odrive_cpp_sdk);
             sdk_ptr_->setZeroethRadianInEncoderTicks(zeroeth_radian_in_encoder_ticks);
+            angle_pubs_.push_back(create_publisher<std_msgs::msg::Float32>("angle/motor_0",1));
+            angle_pubs_.push_back(create_publisher<std_msgs::msg::Float32>("angle/motor_1",1));
+            current_target_angles_ = std::vector<float>(2);
+            auto callback_0 =
+            [this](const typename std_msgs::msg::Float32::SharedPtr msg) -> void
+            {
+                current_target_angles_[0] = msg->data;
+            };
+            angle_subs_.push_back(create_subscription<std_msgs::msg::Float32>("target_angle/motor_0", 1, callback_0));
+            auto callback_1 =
+            [this](const typename std_msgs::msg::Float32::SharedPtr msg) -> void
+            {
+                current_target_angles_[1] = msg->data;
+            };
+            angle_subs_.push_back(create_subscription<std_msgs::msg::Float32>("target_angle/motor_1", 1, callback_1));
         }
         bool result = sdk_ptr_->init();
         if(!result)
@@ -85,6 +108,35 @@ namespace odrive_driver
         {
             RCLCPP_DEBUG(get_logger(), "initialized odrive");
         }
+        using namespace std::chrono_literals;
+        auto timer1 = create_wall_timer(10ms,[this]()
+        {
+            if(num_motor_ == 1)
+            {
+                double odrive_motor_current_positions[1] = {0};
+                bool result = sdk_ptr_->readCurrentMotorPositions(odrive_motor_current_positions);
+                if(result)
+                {
+                    std_msgs::msg::Float32 motor_0_current_angle_msg;
+                    motor_0_current_angle_msg.data = odrive_motor_current_positions[0];
+                    angle_pubs_[0]->publish(motor_0_current_angle_msg);
+                }
+            }
+            if(num_motor_ == 2)
+            {
+                double odrive_motor_current_positions[2] = {0};
+                bool result = sdk_ptr_->readCurrentMotorPositions(odrive_motor_current_positions);
+                if(result)
+                {
+                    std_msgs::msg::Float32 motor_0_current_angle_msg;
+                    motor_0_current_angle_msg.data = odrive_motor_current_positions[0];
+                    angle_pubs_[0]->publish(motor_0_current_angle_msg);
+                    std_msgs::msg::Float32 motor_1_current_angle_msg;
+                    motor_1_current_angle_msg.data = odrive_motor_current_positions[1];
+                    angle_pubs_[1]->publish(motor_1_current_angle_msg);
+                }
+            }
+        });
     }
 }
 

@@ -42,9 +42,15 @@ extern "C" {
 // Headers in ros2
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float32.hpp>
+#include <hardware_interface/joint_command_handle.hpp>
 
 // Headers in this package
 #include <odrive_driver/odrive_cpp_sdk.h>
+
+// Headers in STL
+#include <vector>
+#include <thread>
+#include <chrono>
 
 namespace odrive_driver
 {
@@ -57,6 +63,9 @@ namespace odrive_driver
     std::shared_ptr<odrive::CppSdk> sdk_ptr_;
     std::string odrive_serial_number_;
     int num_motor_;
+    std::vector<rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> angle_pubs_;
+    std::vector<rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> angle_subs_;
+    std::vector<float> current_target_angles_;
   };
 }
 
